@@ -7,6 +7,9 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 project(RequestLogger VERSION 1.0.0)
 
 add_library(${PROJECT_NAME} SHARED
+    #src/doom.cpp
+    #src/DoomNode.cpp
+    #src/doom_impl.c
     src/main.cpp
     # Add your cpp files here
 )

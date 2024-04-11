@@ -21,6 +21,21 @@
 			"default": false,
 			"type": "bool",
 			"description": "will log each request to a new file in geode/log"
+		},
+		"key-color": {
+			"type": "color",
+			"default":[150, 0, 0],
+			"name": "Key Color"
+		},
+		"value-color": {
+			"type": "color",
+			"default":[0, 0, 150],
+			"name": "Value Color"
+		},
+		"enable-color": {
+			"type": "bool",
+			"default": true,
+			"name": "Enable Colored Body"
 		}
 	}
 }
