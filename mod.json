@@ -1,13 +1,13 @@
 {
-	"geode": "2.0.0-beta.23",
+	"geode": "2.0.0-beta.26",
 	"gd": {
 		"win": "2.204"
 	},
-	"version": "v1.0.0",
+	"version": "v2.1.0",
 	"id": "iandyhd3.request_logger",
 	"name": "Request Logger",
 	"developer": "iAndyHD3",
-	"description": "",
+	"description": "Logs gd requests to console or a file",
 
 	"settings": {
 		"log-to-console":{
@@ -20,22 +20,35 @@
 			"name": "Log to File",
 			"default": false,
 			"type": "bool",
-			"description": "will log each request to a new file in geode/log"
+			"description": "will log each request to a new file in geode/log, password hide and separator setting will have no effect"
 		},
-		"key-color": {
-			"type": "color",
-			"default":[150, 0, 0],
-			"name": "Key Color"
+		"hide-gjp2": {
+			"name": "Console Hide password",
+			"type": "bool",
+			"default": true,
+			"description": "The hashed password is sent as the gjp2 key and you should not share it, as such this option hides it automatically"
+
 		},
-		"value-color": {
-			"type": "color",
-			"default":[0, 0, 150],
-			"name": "Value Color"
+		"body-separator":{
+			"type": "string",
+			"default": "&",
+			"filter": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=`~@#$%^&*()_+[]{}\\,./<>?;':\"",
+			"name": "Key/Value Separator"
 		},
 		"enable-color": {
 			"type": "bool",
 			"default": true,
-			"name": "Enable Colored Body"
+			"name": "Console Colored Body"
+		},
+		"key-color": {
+			"type": "color",
+			"default":[59, 120, 255],
+			"name": "Key Color"
+		},
+		"value-color": {
+			"type": "color",
+			"default":[255, 166, 66],
+			"name": "Value Color"
 		}
 	}
 }

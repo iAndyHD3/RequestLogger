@@ -5,22 +5,11 @@
 #include <ghc/filesystem.hpp>
 #include <fmt/format.h>
 #include <fmt/color.h>
+#include <variant>
 
 using namespace cocos2d;
 using namespace cocos2d::extension;
 namespace fs = ghc::filesystem;
-
-
-
-struct MenuLayerExt : geode::Modify<MenuLayerExt, MenuLayer>
-{
-    void onMoreGames(CCObject*) 
-    {
-        gout::info << "hello" << " " << "World" << "!";
-    }
-};
-
-
 
 struct ResponseCallback
 {
@@ -30,6 +19,8 @@ struct ResponseCallback
 
 //adding it as a member doesnt work
 std::unordered_map<CCHttpRequest*, ResponseCallback> originals;
+
+
 std::string_view getResponseView(CCHttpResponse* r)
 {
     auto* data = r->getResponseData();
@@ -110,41 +101,70 @@ public:
         return "binary data";
     }
 
-    std::string getColoredBodyParam(std::string_view param)
+    static std::string_view getCensoredParam(std::string_view key, std::string_view value)
     {
+        if(key == "gjp2") [[unlikely]] return "{hidden}";
+        return value;
+    }
+
+    static std::variant<std::string_view, std::string> getFormattedParam(std::string_view param)
+    {
+        bool color = geode::Mod::get()->getSettingValue<bool>("enable-color");
+        bool hidegjp2 = geode::Mod::get()->getSettingValue<bool>("hide-gjp2");
+        if(!color && !hidegjp2) return param;
+
         auto equal = param.find('=');
         if(equal == std::string_view::npos) [[unlikely]] return {};
         
         auto rgbToColor = [](const cocos2d::ccColor3B& c) { return (c.r << 16) | (c.g << 8) | c.b; };
 
+        auto key = param.substr(0, equal);
+        auto value = param.substr(equal + 1);
+        if(hidegjp2) value = getCensoredParam(key, value);
 
-        auto nameColor = geode::Mod::get()->getSettingValue<cocos2d::ccColor3B>("key-color");
-        auto nameStyle = fmt::fg(static_cast<fmt::color>(rgbToColor(nameColor)));
+        if(color)
+        {
+            auto nameColor = geode::Mod::get()->getSettingValue<cocos2d::ccColor3B>("key-color");
+            auto nameStyle = fmt::fg(static_cast<fmt::color>(rgbToColor(nameColor)));
 
-        auto valueColor = geode::Mod::get()->getSettingValue<cocos2d::ccColor3B>("value-color");
-        auto valueStyle = fmt::fg(static_cast<fmt::color>(rgbToColor(valueColor)));
+            auto valueColor = geode::Mod::get()->getSettingValue<cocos2d::ccColor3B>("value-color");
+            auto valueStyle = fmt::fg(static_cast<fmt::color>(rgbToColor(valueColor)));
 
-
-        return fmt::format("{}{}",
-            fmt::styled(param.substr(0, equal + 1), nameStyle),
-            fmt::styled(param.substr(equal + 1), valueStyle)
-        );
+            return fmt::format("{}={}",
+                fmt::styled(key, nameStyle),
+                fmt::styled(value, valueStyle)
+            );
+        }
+        else
+        {
+            return fmt::format("{}={}", key, value);
+        }
     }
 
     std::string getColoredBody()
     {
         std::vector<std::string> params;
         size_t finalStringSize = 0;
+        std::string separator = geode::Mod::get()->getSettingValue<std::string>("body-separator");
+
         for(const auto& param : splitByDelimStringView(postBody, '&'))
         {
-            finalStringSize += params.emplace_back(getColoredBodyParam(param)).size() + 1;
+            auto formattedParam = getFormattedParam(param);
+            if(auto str = std::get_if<std::string_view>(&formattedParam))
+                finalStringSize += params.emplace_back(*str).size();
+            else if(auto str = std::get_if<std::string>(&formattedParam))
+                finalStringSize += params.emplace_back(*str).size();
+
+            finalStringSize += separator.size();
         }
+        
         std::string ret;
         ret.reserve(finalStringSize);
+
         for(const auto& paramStyled : params)
         {
             ret += paramStyled;
-            ret += '&';
+            ret += separator;
         }
 
         if(ret.empty()) [[unlikely]] return {};
@@ -159,7 +179,7 @@ public:
         logFieldConsole(RequestFieldEnum::StatusCode, status);
 
         bool color = geode::Mod::get()->getSettingValue<bool>("enable-color");
-        logFieldConsole(RequestFieldEnum::RequestBody, color ? getColoredBody() : this->postBody);
+        logFieldConsole(RequestFieldEnum::RequestBody, getColoredBody());
 
         logFieldConsole(RequestFieldEnum::Response, getLogResponse());
     }
